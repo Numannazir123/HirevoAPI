@@ -1,4 +1,4 @@
-﻿using HirevoAPI.Contracts.IRepositories;
+using HirevoAPI.Contracts.IRepositories;
 using HirevoAPI.Contracts.IServices;
 using HirevoAPI.DataTransferObject;
 using HirevoAPI.Models;
@@ -49,7 +49,7 @@ namespace HirevoAPI.Services
         }
 
         // LOGIN
-        public async Task<object> LoginAsync(LoginDto dto)
+        public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
             var user =
                 await _userRepository
@@ -57,7 +57,7 @@ namespace HirevoAPI.Services
 
             if (user == null)
             {
-                return "Username not found";
+                return null;
             }
 
             bool isPasswordValid =
@@ -67,17 +67,28 @@ namespace HirevoAPI.Services
 
             if (!isPasswordValid)
             {
-                return "Invalid password";
+                return null;
             }
 
-            var token = GenerateJwtToken(user);
+            var (token, expiry) = GenerateJwtToken(user);
 
-            return new
+            return new AuthResponseDto
             {
-                token = token,
-                username = user.Username
+                Token = token,
+                TokenExpiry = expiry,
+                User = new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    IsActive = user.IsActive,
+                    CreatedAt = user.CreatedAt
+                }
             };
         }
+
         // GET ALL USERS
         public async Task<List<User>> GetAllUsersAsync()
         {
@@ -130,7 +141,8 @@ namespace HirevoAPI.Services
 
             return "User Deleted Successfully";
         }
-        private string GenerateJwtToken(User user)
+
+        private (string token, DateTime expiry) GenerateJwtToken(User user)
         {
             var jwtSettings =
                 _configuration.GetSection("Jwt");
@@ -147,20 +159,22 @@ namespace HirevoAPI.Services
 
             var claims = new[]
             {
-        new Claim(ClaimTypes.Name, user.Username),
-        new Claim(ClaimTypes.Email, user.Email)
-    };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
+
+            var expiry = DateTime.UtcNow.AddDays(1);
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddDays(1),
+                expires: expiry,
                 signingCredentials: credentials
             );
 
-            return new JwtSecurityTokenHandler()
-                .WriteToken(token);
+            return (new JwtSecurityTokenHandler().WriteToken(token), expiry);
         }
     }
 }

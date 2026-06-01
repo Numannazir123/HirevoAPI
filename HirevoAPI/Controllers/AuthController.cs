@@ -1,4 +1,4 @@
-﻿using HirevoAPI.Contracts.IServices;
+using HirevoAPI.Contracts.IServices;
 using HirevoAPI.DataTransferObject;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +28,9 @@ public class AuthController : ControllerBase
     {
         var result = await _userService.LoginAsync(dto);
 
+        if (result == null)
+            return Unauthorized(new { message = "Invalid username or password." });
+
         return Ok(result);
     }
-}
+}

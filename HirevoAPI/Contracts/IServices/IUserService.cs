@@ -1,4 +1,4 @@
-﻿using HirevoAPI.DataTransferObject;
+using HirevoAPI.DataTransferObject;
 using HirevoAPI.Models;
 
 namespace HirevoAPI.Contracts.IServices
@@ -7,7 +7,7 @@ namespace HirevoAPI.Contracts.IServices
     {
         Task<string> RegisterAsync(RegisterDto dto);
 
-        Task<object> LoginAsync(LoginDto dto);
+        Task<AuthResponseDto?> LoginAsync(LoginDto dto);
 
         Task<List<User>> GetAllUsersAsync();
 
