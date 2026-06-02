@@ -8,5 +8,7 @@ namespace HirevoAPI.Data
         {
         }
         public DbSet<User> Users => Set<User>();
+        public DbSet<Job> Jobs => Set<Job>();
+        public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     }
 }
